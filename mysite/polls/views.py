@@ -169,7 +169,8 @@ def open_file(filename):
 def sampling(mood):
     n_steps = 5  # step
     n_inputs = 1  # 특성수
-    path = 'C:/Users/Administrator/workspace/python2/mysite/'
+    # path = 'C:/Users/Administrator/workspace/python2/mysite/'
+    path = ""
 
     # model file select(mood)
 
