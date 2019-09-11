@@ -40,9 +40,53 @@ def index(request):
 
 def down(request):
     fs = FileSystemStorage("C:/Users/Administrator/workspace/python2/mysite")
-    response = FileResponse(fs.open('new_music.midi', 'rb'), content_type='application/force-download')
-    response['Content-Disposition'] = 'attachment; filename="music.midi"'
+    response = FileResponse(fs.open('new_music.mid', 'rb'), content_type='application/force-download')
+    response['Content-Disposition'] = 'attachment; filename="music.mid"'
     return response
+
+def create_happy(request):
+    s = sampling(1)
+    note_seq = ""
+    for note in s:
+        note_seq += note + " "
+
+    conv_midi = music21.converter.subConverters.ConverterMidi()
+
+    m = music21.converter.parse("2/4 " + note_seq, format='tinyNotation')
+
+    # midi file create
+    m.write("midi", fp="./new_music.mid")
+
+    return render(request, 'polls/music.html')
+
+def create_calm(request):
+    s = sampling(2)
+    note_seq = ""
+    for note in s:
+        note_seq += note + " "
+
+    conv_midi = music21.converter.subConverters.ConverterMidi()
+
+    m = music21.converter.parse("2/4 " + note_seq, format='tinyNotation')
+
+    # midi file create
+    m.write("midi", fp="./new_music.mid")
+
+    return render(request, 'polls/music.html')
+
+def create_urgency(request):
+    s = sampling(3)
+    note_seq = ""
+    for note in s:
+        note_seq += note + " "
+
+    conv_midi = music21.converter.subConverters.ConverterMidi()
+
+    m = music21.converter.parse("2/4 " + note_seq, format='tinyNotation')
+
+    # midi file create
+    m.write("midi", fp="./new_music.mid")
+    return render(request, 'polls/music.html')
 
 def test(request):
     num = 0
@@ -51,7 +95,7 @@ def test(request):
         mood = request.POST["mood"]
     else:
         context_dict = {}
-        return render(request, 'polls/index.html', context_dict)
+        return render(request, 'index.html', context_dict)
 
     if mood == '1':
         num = 1
@@ -76,7 +120,7 @@ def test(request):
     m.show("midi")
 
     # midi file create
-    m.write("midi", fp="./new_music.midi")
+    m.write("midi", fp="./new_music.mid")
 
     # print mood num
     # return HttpResponse(num)

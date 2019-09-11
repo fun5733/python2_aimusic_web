@@ -2,9 +2,14 @@
 from django.conf.urls import url
 from django.urls import path
 from . import views
+from django.conf import settings
+from django.conf.urls.static import static
 
-urlpatterns = {
+urlpatterns = [
     path('', views.index, name="index"),
     path('2', views.test, name="po1"),
-    path('3', views.down, name="down"),
-}
+    path('happy', views.create_happy, name="happy"),
+    path('urgency', views.create_urgency, name="urgency"),
+    path('calm', views.create_calm, name="calm"),
+    path('3', views.down, name="down")
+] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
