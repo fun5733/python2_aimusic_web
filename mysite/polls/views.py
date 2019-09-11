@@ -39,7 +39,7 @@ def index(request):
     return render(request, 'polls/index.html')
 
 def down(request):
-    fs = FileSystemStorage("C:/Users/Administrator/workspace/python2/mysite")
+    fs = FileSystemStorage("")
     response = FileResponse(fs.open('new_music.mid', 'rb'), content_type='application/force-download')
     response['Content-Disposition'] = 'attachment; filename="music.mid"'
     return response
