@@ -1,12 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from django.shortcuts import render, get_object_or_404
-from selenium import webdriver
-from selenium.webdriver.common.keys import Keys
-from selenium.webdriver.chrome.options import Options
-from ipykernel import kernelapp as app
 import music21
-import os
 from tensorflow import keras
 from django.http import HttpResponse
 from django.urls import reverse
