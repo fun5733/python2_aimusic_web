@@ -28,9 +28,10 @@ class LossHistory(keras.callbacks.Callback):
 # 데이터셋 생성 함수
 def seq2dataset(seq, window_size):
     dataset = []
-    for i in range(len(seq) - window_size):
-        subset = seq[i:(i + window_size + 1)]
-        dataset.append([code2idx[item] for item in subset])
+    for j in range(len(seq)):
+        for i in range(len(seq[j]) - window_size):
+            subset = seq[j][i:(i + window_size + 1)]
+            dataset.append([code2idx[item] for item in subset])
     return np.array(dataset)
 
 def open_seq(code_list):
@@ -38,29 +39,48 @@ def open_seq(code_list):
     learn_data = []
     data_ls = []
     data_num = []
-    for i in range(len(code_list)):
-        for j in range(len(code_list[i])):
-            data.append(code_list[i][j])
-    for i in data:
-        if not i in data_ls:
-            data_ls.append(i)
-    data_ls.append(':|')
-    data_ls.append('|:')
-    for j in range(0, len(data_ls)):
-        data_num.append(j)
+    for j in range(len(code_list)):
+        data.append([])
+        for k in range(len(code_list[j])):
+            data[j].append(code_list[j][k])
+    for j in range(len(data)):
+        learn_data.append([])
+        for l in range(len(data[j])):
+            if data[j][l] is ',':
+                if (data[j][l - 1] is 'G') or (data[j][l - 1] is 'A') or (data[j][l - 1] is 'B'):
+                    data[j][l - 1] = data[j][l - 1] + data[j][l]
+                    learn_data[j].pop()
+                    learn_data[j].append(data[j][l-1])
+            elif data[j][l] is "'":
+                if data[j][l - 1] is 'c' or data[j][l - 1] is 'd':
+                    data[j][l - 1] = data[j][l- 1] + data[j][l]
+                    learn_data[j].pop()
+                    learn_data[j].append(data[j][l - 1])
+            elif data[j][l] is '|' and data[j][l - 1] is ':':
+                data[j][l - 1] = data[j][l - 1] + data[j][l]
+                learn_data[j].pop()
+                learn_data[j].append(data[j][l - 1])
+            elif data[j][l] is ':' and data[j][l - 1] is '|':
+                data[j][l - 1] = data[j][l- 1] + data[j][l]
+                learn_data[j].pop()
+                learn_data[j].append(data[j][l - 1])
+            elif data[j][l] is ':' and data[j][l - 1] is ':':
+                data[j][l - 1] = data[j][l - 1] + data[j][l]
+                learn_data[j].pop()
+                learn_data[j].append(data[j][l - 1])
+            else:
+                learn_data[j].append(data[j][l])
+
+    for g in range(len(learn_data)):
+        for h in range(len(learn_data[g])):
+            if not learn_data[g][h] in data_ls:
+                data_ls.append(learn_data[g][h])
+
+    for z in range(0, len(data_ls)):
+        data_num.append(z)
     data2num = dict(zip(data_ls, data_num))
     num2data = dict(zip(data_num, data_ls))
-    for i in range(len(data)):
-        tmp = ''
-        if data[i] is '|' and data[i-1] is ':':
-            tmp = ':|'
-            learn_data.pop()
-        elif data[i] is ':' and data[i-1] is '|':
-            tmp = '|:'
-            learn_data.pop()
-        else:
-            tmp = data[i]
-        learn_data.append(tmp)
+
     return learn_data, data2num, num2data
 
 def open_file(filename):
@@ -104,22 +124,24 @@ def open_file(filename):
 
 
 # 2. 데이터셋 생성하기
-n_steps = 4  # step
+n_steps = 6  # step
 n_inputs = 1  # 특성수
 
 n = int(input("0: 밝음 1: 잔잔 2: 긴박 ="))
-if n is 0:
+if n == 0:
     rhythm, code_len, chords, quick, X_code = open_file("happy.txt")
-elif n is 1:
+elif n == 1:
     rhythm, code_len, chords, quick, X_code = open_file("calm.txt")
 else:
     rhythm, code_len, chords, quick, X_code = open_file("thrill.txt")
 
 seq, code2idx, idx2code = open_seq(X_code)
-dataset = seq2dataset(seq, window_size=4)
-
+dataset = seq2dataset(seq, window_size=n_steps)
+print(seq)
+print(code2idx)
+print(idx2code)
 print(dataset.shape)
-
+print(dataset)
 # 입력(X)과 출력(Y) 변수로 분리하기
 x_train = dataset[:, 0:n_steps]
 y_train = dataset[:, n_steps]
@@ -149,18 +171,58 @@ model = model_from_json(loaded_model_json)
 model.load_weights("model_w.h5")
 print("loaded model from disk")
 '''
-model = keras.models.load_model('model.h5')
-#model = load_model('model.h5', custom_objects= {'lstm':UnifiedLSTM})
-pred_count = 50  # 최대 예측 개수 정의
+if n is 0:
+    model = keras.models.load_model('model_h.h5')
+elif n is 1:
+    model = keras.models.load_model('model_c.h5')
+elif n is 2:
+    model = keras.models.load_model('model_t.h5')
+
+pred_count = 200  # 최대 예측 개수 정의
 
 
 # 곡 전체 예측
 
-seq_in = ['G', 'F', 'E', 'D']
+
+in_list = ['G,','A,','B,','C','D','E','F','G','A','B','c','d','e','f','g','a','b',"c'","d'", 1,2,3,4]
+seq_in=[]
+state = 0  # 0: 알파벳 , 1: 숫자
+random_num = 0 #랜덤으로 뽑은 횟수
+random_count = 0 # 문자가 데이터셋에 포함 유무/  0 : 무, 1 : 유
+while random_num <n_steps:
+    select_ch = random.choice(in_list)
+    for i in range(len(seq)):
+        if select_ch in seq[i]:
+            random_count = 1
+            break
+    if random_count == 0:
+        continue
+    if random_num == 0: #문자만 가능
+        if select_ch.isdigit() is False:
+            seq_in.append(select_ch)
+            random_num = random_num + 1
+    else:
+        if state == 0:
+            if select_ch.isdigit() is False:
+                seq_in.append(select_ch)
+                random_num = random_num + 1
+                state = 0
+            elif select_ch.isdigit() is True:
+                seq_in.append(select_ch)
+                random_num = random_num + 1
+                state = 1
+        elif state == 1:
+            if select_ch.isdigit() is False:
+                seq_in.append(select_ch)
+                random_num = random_num + 1
+                state = 0
+    random_count = 0
+print(seq_in)
 seq_out = seq_in
 seq_in = [code2idx[it] / float(max_idx_value) for it in seq_in]  # 코드를 인덱스값으로 변환
 
-for i in range(pred_count):
+
+for p in range(pred_count):
     sample_in = np.array(seq_in)
     sample_in = np.reshape(sample_in, (1, n_steps, n_inputs))  # 샘플 수, 타입스텝 수, 속성 수
     pred_out = model.predict(sample_in)
@@ -171,14 +233,49 @@ for i in range(pred_count):
 
 model.reset_states()
 
+
 m_result = ''.join(random.sample(rhythm, 1))
 l_result = ''.join(random.sample(code_len, 1))
 k_result = ''.join(random.sample(chords, 1))
+q_result = ''.join(random.sample(quick, 1))
+print(seq_out)
+count = 0 #도돌이표 수
+for o in range(len(seq_out)):
+    if seq_out[o] == '|:':
+        if count == 0:
+            count = count + 1
+        elif count == 1:
+            seq_out[o] = ':||:'
+    elif seq_out[o] == ':|':
+        if count == 1:
+            count = 0
+    elif seq_out[o] == '::':
+        if count != 1:
+            count = 1
+if count == 1:
+    seq_out.append(':|')
+print(seq_out)
+code = ''.join(seq_out)
 
+composition = ["X:1", "T:sample", "M:"+m_result, "L:"+l_result, "Q:"+q_result, "K:"+k_result, code]
+if m_result is 'no':
+	del composition[2]
+if l_result is 'no':
+	for i in range(len(composition)):
+		if "L:" in composition[i]:
+			del composition[i]
+			break
+if q_result is 'no':
+	for i in range(len(composition)):
+		if "Q:" in composition[i]:
+			del composition[i]
+			break
 
 print("full song prediction : ")
-print("X: 1\nT: sample\nM: %s\nL: %s\nK: %s" %(m_result, l_result, k_result))
-print(''.join(seq_out))
+for i in range(len(composition)):
+	if "\n" in composition[i]:
+		composition[i] = composition[i].replace("\n", "")
+	print(composition[i])
 
 '''
 import music21

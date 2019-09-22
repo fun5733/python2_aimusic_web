@@ -1,7 +1,12 @@
 # -*- coding: utf-8 -*-
 
 from django.shortcuts import render, get_object_or_404
+from selenium import webdriver
+from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.chrome.options import Options
+from ipykernel import kernelapp as app
 import music21
+import os
 from tensorflow import keras
 from django.http import HttpResponse
 from django.urls import reverse
@@ -47,7 +52,7 @@ def create_happy(request):
 
     conv_midi = music21.converter.subConverters.ConverterMidi()
 
-    m = music21.converter.parse("2/4 " + note_seq, format='tinyNotation')
+    m = music21.converter.parse(s, format='abc')
 
     # midi file create
     m.write("midi", fp="./new_music.mid")
@@ -62,7 +67,7 @@ def create_calm(request):
 
     conv_midi = music21.converter.subConverters.ConverterMidi()
 
-    m = music21.converter.parse("2/4 " + note_seq, format='tinyNotation')
+    m = music21.converter.parse(s, format='abc')
 
     # midi file create
     m.write("midi", fp="./new_music.mid")
@@ -74,10 +79,10 @@ def create_urgency(request):
     note_seq = ""
     for note in s:
         note_seq += note + " "
-
+    print(s)
     conv_midi = music21.converter.subConverters.ConverterMidi()
 
-    m = music21.converter.parse("2/4 " + note_seq, format='tinyNotation')
+    m = music21.converter.parse(s, format='abc')
 
     # midi file create
     m.write("midi", fp="./new_music.mid")
@@ -206,7 +211,7 @@ def open_file(filename):
     return M, L, K, Q, X
 
 def sampling(mood):
-    n_steps = 5  # step
+    n_steps = 6  # step
     n_inputs = 1  # 특성수
     # path = 'C:/Users/Administrator/workspace/python2/mysite/'
     path = ""
@@ -215,13 +220,13 @@ def sampling(mood):
 
     if mood is 1:
         target_txt = "happy.txt"
-        target_model = "model_happy.h5"
+        target_model = "model_h.h5"
     elif mood is 2:
         target_txt = "calm.txt"
-        target_model = "model_calm.h5"
+        target_model = "model_c.h5"
     elif mood is 3:
         target_txt = "thrill.txt"
-        target_model = "model_thrill.h5"
+        target_model = "model_t.h5"
 
     # model = keras.models.load_model('C:/Users/Administrator/workspace/python2/mysite/model_thrill.h5')
     model = keras.models.load_model(path + target_model)
@@ -302,6 +307,7 @@ def sampling(mood):
     m_result = ''.join(random.sample(rhythm, 1))
     l_result = ''.join(random.sample(code_len, 1))
     k_result = ''.join(random.sample(chords, 1))
+    q_result = ''.join(random.sample(quick, 1))
     print(seq_out)
     count = 0  # 도돌이표 수
     for o in range(len(seq_out)):
@@ -321,10 +327,28 @@ def sampling(mood):
     print(seq_out)
     code = ''.join(seq_out)
 
+    composition = ["X:1\n", "T:sample\n", "M:"+m_result, "L:"+l_result, "Q:"+q_result, "K:"+k_result, code]
+    if m_result is 'no':
+    	del composition[2]
+    if l_result is 'no':
+    	for i in range(len(composition)):
+    		if "L:" in composition[i]:
+    			del composition[i]
+    			break
+    if q_result is 'no':
+    	for i in range(len(composition)):
+    		if "Q:" in composition[i]:
+    			del composition[i]
+    			break
+    end_code = ''
     print("full song prediction : ")
-    print("X: 1\nT: sample\nM: %sL: %sK: %s%s" % (m_result, l_result, k_result, code))
+    for i in range(len(composition)):
+    	end_code = end_code + ''.join(composition[i])
+    	if "\n" in composition[i]:
+    		composition[i] = composition[i].replace("\n", "")
+    	print(composition[i])
     #return result
-    return ''.join(seq_out)
+    return ''.join(end_code)
 
 
 
