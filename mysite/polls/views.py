@@ -88,44 +88,6 @@ def create_urgency(request):
     m.write("midi", fp="./new_music.mid")
     return render(request, 'polls/music.html')
 
-def test(request):
-    num = 0
-    mood = 0
-    if request.method == "POST":
-        mood = request.POST["mood"]
-    else:
-        context_dict = {}
-        return render(request, 'index.html', context_dict)
-
-    if mood == '1':
-        num = 1
-    elif mood == '2':
-        num = 2
-    elif mood == '3':
-        num = 3
-    elif mood == 0:
-        num = -1
-
-    s = sampling(num)
-
-    note_seq = ""
-    for note in s:
-        note_seq += note + " "
-
-    conv_midi = music21.converter.subConverters.ConverterMidi()
-
-    m = music21.converter.parse("2/4 " + note_seq, format='tinyNotation')
-
-    # music play
-    m.show("midi")
-
-    # midi file create
-    m.write("midi", fp="./new_music.mid")
-
-    # print mood num
-    # return HttpResponse(num)
-    return render(request, 'polls/music.html')
-
 def open_seq(code_list):
     data = []
     learn_data = []
@@ -215,7 +177,6 @@ def sampling(mood):
     if mood is 2:
         n_steps = 5
     n_inputs = 1  # 특성수
-    # path = 'C:/Users/Administrator/workspace/python2/mysite/'
     path = ""
 
     # model file select(mood)
@@ -230,10 +191,8 @@ def sampling(mood):
         target_txt = "thrill.txt"
         target_model = "model_t.h5"
 
-    # model = keras.models.load_model('C:/Users/Administrator/workspace/python2/mysite/model_thrill.h5')
     model = keras.models.load_model(path + target_model)
 
-    # rhythm, code_len, chords, quick, X_code = open_file("C:/Users/Administrator/workspace/python2/mysite/thrill.txt")
     rhythm, code_len, chords, quick, X_code = open_file(path + target_txt)
 
     seq, code2idx, idx2code = open_seq(X_code)
@@ -326,6 +285,18 @@ def sampling(mood):
                 count = 1
     if count == 1:
         seq_out.append(':|')
+    for i in range(len(seq_out)):
+        if seq_out[i] == '/':
+            count_s = count_s+1
+            if count_s == 6:
+                seq_out[i] = ''
+                seq_out[i-1] = ''
+                seq_out[i-2] = ''
+                seq_out[i-3] = ''
+                seq_out[i-4] = ''
+                seq_out[i-5] = ''
+        else:
+            count_s = 0
     print(seq_out)
     code = ''.join(seq_out)
 
@@ -349,7 +320,6 @@ def sampling(mood):
     	if "\n" in composition[i]:
     		composition[i] = composition[i].replace("\n", "")
     	print(composition[i])
-    #return result
     return ''.join(end_code)
 
 
