@@ -212,6 +212,8 @@ def open_file(filename):
 
 def sampling(mood):
     n_steps = 6  # step
+    if mood is 2:
+        n_steps = 5
     n_inputs = 1  # 특성수
     # path = 'C:/Users/Administrator/workspace/python2/mysite/'
     path = ""
